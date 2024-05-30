@@ -1,0 +1,235 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Unused terminals:
+
+    ARRAY
+    BEGIN
+    BOOL_TYPE
+    CHAR_TYPE
+    COMMENT
+    DIV
+    DO
+    DOT
+    DOWNTO
+    END
+    FALSE
+    FLOAT_TYPE
+    FOR
+    INT_TYPE
+    POWER
+    PROCEDURE
+    PROGRAM
+    REPEAT
+    STRING_TYPE
+    THEN
+    TO
+    TRUE
+    UNTIL
+    VOID
+    VOID_TYPE
+
+Grammar
+
+Rule 0     S' -> program
+Rule 1     program -> declarations
+Rule 2     declarations -> declaration declarations
+Rule 3     declarations -> declaration
+Rule 4     declaration -> val_declaration
+Rule 5     declaration -> var_declaration
+Rule 6     declaration -> function_declaration
+Rule 7     val_declaration -> VAL identifier COLON VAR_TYPE ASSIGN expression SEMICOLON
+Rule 8     val_declaration -> VAL identifier COLON VAR_TYPE ASSIGN array_expression SEMICOLON
+Rule 9     var_declaration -> VAR identifier COLON VAR_TYPE ASSIGN expression SEMICOLON
+Rule 10    var_declaration -> VAR identifier COLON VAR_TYPE ASSIGN array_expression SEMICOLON
+Rule 11    function_declaration -> function_declaration_body
+Rule 12    function_declaration -> function_declaration_nobody
+Rule 13    function_declaration_body -> FUNCTION identifier LPAREN parameter_list RPAREN COLON VAR_TYPE block
+Rule 14    function_declaration_nobody -> FUNCTION identifier LPAREN parameter_list RPAREN COLON VAR_TYPE SEMICOLON
+Rule 15    parameter_list -> parameter COMMA parameter_list
+Rule 16    parameter_list -> parameter
+Rule 17    parameter_list -> empty
+Rule 18    parameter -> parameter_var
+Rule 19    parameter -> parameter_val
+Rule 20    parameter_var -> VAR identifier COLON VAR_TYPE
+Rule 21    parameter_val -> VAL identifier COLON VAR_TYPE
+Rule 22    block -> LBRACE statements RBRACE
+Rule 23    statements -> statement statements
+Rule 24    statements -> statement
+Rule 25    statements -> empty
+Rule 26    statement -> val_declaration
+Rule 27    statement -> var_declaration
+Rule 28    statement -> assignment_statement
+Rule 29    statement -> function_assignment
+Rule 30    statement -> if_statement
+Rule 31    statement -> while_statement
+Rule 32    statement -> function_call_statement
+Rule 33    assignment_statement -> identifier ASSIGN expression SEMICOLON
+Rule 34    function_assignment -> identifier ASSIGN block SEMICOLON
+Rule 35    function_call_statement -> identifier LPAREN argument_list RPAREN SEMICOLON
+Rule 36    argument_list -> argument COMMA argument_list
+Rule 37    argument_list -> argument
+Rule 38    argument_list -> empty
+Rule 39    argument -> expression
+Rule 40    if_statement -> IF expression block
+Rule 41    if_statement -> IF expression block ELSE block
+Rule 42    while_statement -> WHILE expression block
+Rule 43    empty -> <empty>
+Rule 44    expression -> statement_expression
+Rule 45    statement_expression -> statement_expression and_or expression_s
+Rule 46    statement_expression -> expression_s
+Rule 47    and_or -> AND
+Rule 48    and_or -> OR
+Rule 49    expression_s -> expression_m csign expression_m
+Rule 50    expression_s -> expression_m
+Rule 51    expression_m -> expression_m msign expression_l
+Rule 52    expression_m -> expression_l
+Rule 53    expression_m -> unary_expression_statement
+Rule 54    expression_l -> statement_literal
+Rule 55    expression_l -> identifier
+Rule 56    expression_l -> array_access
+Rule 57    expression_l -> LPAREN statement_expression RPAREN
+Rule 58    expression_l -> function_call_inline
+Rule 59    unary_expression_statement -> unary_sign expression_l
+Rule 60    csign -> EQ
+Rule 61    csign -> NEQ
+Rule 62    csign -> GT
+Rule 63    csign -> GE
+Rule 64    csign -> LT
+Rule 65    csign -> LE
+Rule 66    msign -> PLUS
+Rule 67    msign -> MINUS
+Rule 68    msign -> TIMES
+Rule 69    msign -> DIVIDE
+Rule 70    msign -> MOD
+Rule 71    statement_literal -> int
+Rule 72    statement_literal -> float
+Rule 73    statement_literal -> boolean
+Rule 74    statement_literal -> char
+Rule 75    statement_literal -> string
+Rule 76    unary_sign -> MINUS
+Rule 77    unary_sign -> NOT
+Rule 78    identifier -> IDENTIFIER
+Rule 79    array_access -> identifier LBRACKET expression RBRACKET
+Rule 80    function_call_inline -> identifier LPAREN argument_list RPAREN
+Rule 81    array_expression -> LBRACKET array_elements RBRACKET
+Rule 82    array_elements -> expression COMMA array_elements
+Rule 83    array_elements -> expression
+Rule 84    int -> INT
+Rule 85    float -> FLOAT
+Rule 86    string -> STRING
+Rule 87    char -> CHAR
+Rule 88    boolean -> BOOLEAN
+
+Terminals, with rules where they appear
+
+AND                  : 47
+ARRAY                : 
+ASSIGN               : 7 8 9 10 33 34
+BEGIN                : 
+BOOLEAN              : 88
+BOOL_TYPE            : 
+CHAR                 : 87
+CHAR_TYPE            : 
+COLON                : 7 8 9 10 13 14 20 21
+COMMA                : 15 36 82
+COMMENT              : 
+DIV                  : 
+DIVIDE               : 69
+DO                   : 
+DOT                  : 
+DOWNTO               : 
+ELSE                 : 41
+END                  : 
+EQ                   : 60
+FALSE                : 
+FLOAT                : 85
+FLOAT_TYPE           : 
+FOR                  : 
+FUNCTION             : 13 14
+GE                   : 63
+GT                   : 62
+IDENTIFIER           : 78
+IF                   : 40 41
+INT                  : 84
+INT_TYPE             : 
+LBRACE               : 22
+LBRACKET             : 79 81
+LE                   : 65
+LPAREN               : 13 14 35 57 80
+LT                   : 64
+MINUS                : 67 76
+MOD                  : 70
+NEQ                  : 61
+NOT                  : 77
+OR                   : 48
+PLUS                 : 66
+POWER                : 
+PROCEDURE            : 
+PROGRAM              : 
+RBRACE               : 22
+RBRACKET             : 79 81
+REPEAT               : 
+RPAREN               : 13 14 35 57 80
+SEMICOLON            : 7 8 9 10 14 33 34 35
+STRING               : 86
+STRING_TYPE          : 
+THEN                 : 
+TIMES                : 68
+TO                   : 
+TRUE                 : 
+UNTIL                : 
+VAL                  : 7 8 21
+VAR                  : 9 10 20
+VOID                 : 
+VOID_TYPE            : 
+WHILE                : 42
+error                : 
+
+Nonterminals, with rules where they appear
+
+VAR_TYPE             : 7 8 9 10 13 14 20 21
+and_or               : 45
+argument             : 36 37
+argument_list        : 35 36 80
+array_access         : 56
+array_elements       : 81 82
+array_expression     : 8 10
+assignment_statement : 28
+block                : 13 34 40 41 41 42
+boolean              : 73
+char                 : 74
+csign                : 49
+declaration          : 2 3
+declarations         : 1 2
+empty                : 17 25 38
+expression           : 7 9 33 39 40 41 42 79 82 83
+expression_l         : 51 52 59
+expression_m         : 49 49 50 51
+expression_s         : 45 46
+float                : 72
+function_assignment  : 29
+function_call_inline : 58
+function_call_statement : 32
+function_declaration : 6
+function_declaration_body : 11
+function_declaration_nobody : 12
+identifier           : 7 8 9 10 13 14 20 21 33 34 35 55 79 80
+if_statement         : 30
+int                  : 71
+msign                : 51
+parameter            : 15 16
+parameter_list       : 13 14 15
+parameter_val        : 19
+parameter_var        : 18
+program              : 0
+statement            : 23 24
+statement_expression : 44 45 57
+statement_literal    : 54
+statements           : 22 23
+string               : 75
+unary_expression_statement : 53
+unary_sign           : 59
+val_declaration      : 4 26
+var_declaration      : 5 27
+while_statement      : 31
+
