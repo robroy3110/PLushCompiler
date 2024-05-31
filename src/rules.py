@@ -1,5 +1,5 @@
 # Precedência e associação dos operadores
-from src.ast_nodes import *
+from ast_nodes import *
 
 """precedence = (
     ('nonassoc', 'EQ', 'NEQ', 'GT', 'GE', 'LT', 'LE'),
