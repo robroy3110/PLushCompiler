@@ -1,11 +1,13 @@
+import subprocess
 from typing import Any
 
 from ply import yacc, lex
 
 from semantic import *
-from src.compilador import compilador
+from compilador import compilador
 from tokens import *
 from rules import *
+
 
 # Using the parse
 def get_input(file=False):
@@ -22,6 +24,7 @@ def get_input(file=False):
                 break
     return data
 
+
 def ast_to_dict(node: ASTNode) -> Any:
     if isinstance(node, list):
         return [ast_to_dict(item) for item in node]
@@ -34,12 +37,13 @@ def ast_to_dict(node: ASTNode) -> Any:
     else:
         return node
 
+
 def main(options={}, filename=False):
     logger = yacc.NullLogger()
     parser = yacc.yacc(debug=logger, errorlog=logger)
-    #debug = True, debugfile = "parser_debug.log", errorlog = logger
+    # debug = True, debugfile = "parser_debug.log", errorlog = logger
     datafile = get_input(filename)
-    ast = parser.parse(datafile, lexer=lex.lex(nowarn=1)) #,debug=True)
+    ast = parser.parse(datafile, lexer=lex.lex(nowarn=1))  # ,debug=True)
 
     if options.tree:
         import json
@@ -55,8 +59,16 @@ def main(options={}, filename=False):
         codigo_llvm = compilador(ast)
         print("Compilado com sucesso!")
 
-        with open(f"{filename.replace('.pl','')}.ll", "w") as f:
+        with open(f"{filename.replace('.pl', '')}.ll", "w") as f:
             f.write(codigo_llvm)
+
+        # ecutar o código LLVM usando lli
+        result = subprocess.run(['lli', f"{filename.replace('.pl', '')}.ll"], capture_output=True, text=True)
+        print("Resultado da execução:")
+        print(result.stdout)
+        if result.stderr:
+            print("Erros:")
+        print(result.stderr)
     except Exception as e:
         print(f"Erro de compilação: {e}")
 
