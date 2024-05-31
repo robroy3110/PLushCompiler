@@ -1,4 +1,4 @@
-from src.ast_nodes import *
+from ast_nodes import *
 
 types = ['int', 'float', 'char', 'string', 'boolean', 'void', '[int]', '[float]', '[char]', '[string]', '[boolean]']
 
