@@ -1,25 +1,6 @@
 import re
 
-from src.ast_nodes import *
-
-program = (
-    "program",
-    [
-        ("let", "a", ("literal", 1)),
-        ("let", "k", ("var", "a")),
-        ("let", "b", ("add", ("var", "a"), ("literal", 4))),
-        (
-            "do",
-            [
-                ("print", ("var", "b")),
-                ("print", ("var", "a")),
-                ("set", "a", ("add", ("var", "a"), ("literal", 1))),
-            ],
-            ("var", "a"),
-            (("literal", 10)),
-        ),
-    ],
-)
+from ast_nodes import *
 
 
 #TYPES: Int - i32
@@ -32,7 +13,49 @@ program = (
 # Val(constants) - The two strings ‘true’ and ‘false’ are both valid constants of the i1 type.
 # String - possivelmente i8*
 
-#FALTA FAZER RETURN DA FUNÇAO FIZZBUZZ := 2
+
+powi32_function = """
+define i32 @powi32(i32 %base, i32 %exp) {
+entry:
+    %is_zero_exp = icmp eq i32 %exp, 0
+    br i1 %is_zero_exp, label %return_one, label %main_loop
+return_one:
+    ret i32 1
+main_loop:
+    %result = alloca i32, align 4
+    store i32 1, i32* %result, align 4
+    %b = alloca i32, align 4
+    store i32 %base, i32* %b, align 4
+    %e = alloca i32, align 4
+    store i32 %exp, i32* %e, align 4
+loop:
+    %current_exp = load i32, i32* %e, align 4
+    %is_exp_even = and i32 %current_exp, 1
+    %is_exp_odd = icmp ne i32 %is_exp_even, 0
+    br i1 %is_exp_odd, label %odd_case, label %even_case
+odd_case:
+    %current_result = load i32, i32* %result, align 4
+    %current_base = load i32, i32* %b, align 4
+    %new_result = mul i32 %current_result, %current_base
+    store i32 %new_result, i32* %result, align 4
+    br label %update_exp
+even_case:
+    br label %update_exp
+update_exp:
+    %current_exp2 = load i32, i32* %e, align 4
+    %new_exp = ashr i32 %current_exp2, 1
+    store i32 %new_exp, i32* %e, align 4
+    %current_base2 = load i32, i32* %b, align 4
+    %new_base = mul i32 %current_base2, %current_base2
+    store i32 %new_base, i32* %b, align 4
+    %updated_exp = load i32, i32* %e, align 4
+    %is_exp_zero = icmp eq i32 %updated_exp, 0
+    br i1 %is_exp_zero, label %end_loop, label %loop
+end_loop:
+    %final_result = load i32, i32* %result, align 4
+    ret i32 %final_result
+}
+        """
 
 class Emitter(object):
     def __init__(self):
@@ -78,15 +101,21 @@ class VarTable:
     def __init__(self, name=None):
         self.vars = {}
         self.name = name
+        self.last_added = None
 
     def add(self, name, vtype):
         self.vars[name] = vtype
+        self.last_added = name
 
     def has_var(self, name):
         return name in self.vars
 
     def get(self, name):
         return self.vars[name]
+
+    def get_last(self):
+        if self.last_added is not None:
+            return self.last_added
 
     def get_name(self):
         return self.name
@@ -110,8 +139,6 @@ functions = {
         ("a", 'i1')
     ])
 }
-
-
 def get_var(varn):
     var = varn.lower()
     for c in contexts[::-1]:
@@ -122,6 +149,9 @@ def get_var(varn):
 
 def add_var(varn, typ):
     contexts[-1].add(varn, typ)
+
+def get_last():
+    return contexts[-1].get_last()
 
 
 def varType(type_name):
@@ -135,6 +165,16 @@ def varType(type_name):
         return "i1"
     elif type_name == "char":
         return "i8"
+    elif type_name == "[int]":
+        return "i32*"
+    elif type_name == "[string]":
+        return "i8**"
+    elif type_name == "[float]":
+        return "float*"
+    elif type_name == "[boolean]":
+        return "i1*"
+    elif type_name == "[char]":
+        return "i8*"
     else:
         raise ValueError(f"Unknown type: {type_name}")
 
@@ -199,58 +239,15 @@ entry:
     ret void
 }"""
 
-        powi32_function = """
-define i32 @powi32(i32 %base, i32 %exp) {
-entry:
-    %is_zero_exp = icmp eq i32 %exp, 0
-    br i1 %is_zero_exp, label %return_one, label %main_loop
-return_one:
-    ret i32 1
-main_loop:
-    %result = alloca i32, align 4
-    store i32 1, i32* %result, align 4
-    %b = alloca i32, align 4
-    store i32 %base, i32* %b, align 4
-    %e = alloca i32, align 4
-    store i32 %exp, i32* %e, align 4
-loop:
-    %current_exp = load i32, i32* %e, align 4
-    %is_exp_even = and i32 %current_exp, 1
-    %is_exp_odd = icmp ne i32 %is_exp_even, 0
-    br i1 %is_exp_odd, label %odd_case, label %even_case
-odd_case:
-    %current_result = load i32, i32* %result, align 4
-    %current_base = load i32, i32* %b, align 4
-    %new_result = mul i32 %current_result, %current_base
-    store i32 %new_result, i32* %result, align 4
-    br label %update_exp
-even_case:
-    br label %update_exp
-update_exp:
-    %current_exp2 = load i32, i32* %e, align 4
-    %new_exp = ashr i32 %current_exp2, 1
-    store i32 %new_exp, i32* %e, align 4
-    %current_base2 = load i32, i32* %b, align 4
-    %new_base = mul i32 %current_base2, %current_base2
-    store i32 %new_base, i32* %b, align 4
-    %updated_exp = load i32, i32* %e, align 4
-    %is_exp_zero = icmp eq i32 %updated_exp, 0
-    br i1 %is_exp_zero, label %end_loop, label %loop
-end_loop:
-    %final_result = load i32, i32* %result, align 4
-    ret i32 %final_result
-}
-        """
         emitter.append(""" 
 @.str_int = private unnamed_addr constant [3 x i8] c"%d\\00"
 @.str_string = private unnamed_addr constant [3 x i8] c"%s\\00"
-@.str_float = private unnamed_addr constant [4 x i8] c"%f\\00"
+@.str_float = private unnamed_addr constant [3 x i8] c"%f\\00"
 @.str_char = private unnamed_addr constant [3 x i8] c"%c\\00"
 @.str_boolean_true = private unnamed_addr constant [5 x i8] c"true\\00"
 @.str_boolean_false = private unnamed_addr constant [6 x i8] c"false\\00"
 """)
         emitter.append("declare i32 @printf(i8*, ...)")
-        emitter.append("declare i32 @powi32(i32, i32)")
         emitter.append("define i32 @main() #0 {")
 
         for decl in node.declarations:
@@ -259,20 +256,31 @@ end_loop:
         emitter.append("   ret i32 0")
         emitter.append("}")
 
-        emitter.append(powi32_function)
         emitter.append(print_functions)
         return emitter.get_code()
     elif isinstance(node, VariableDeclaration):
         vname = node.varName
-        vtype = varType(node.varType)
-        add_var(vname, vtype)
-        expr = node.varExpression
-        pname = emitter.get_pointer_name(vname)
-        emitter.append(f"   {pname} = alloca {vtype}, align 4")
-        registo = compilador(expr, emitter)
-        emitter.append(f"   store {vtype} {registo}, {vtype}* {pname}, align 4")
+        if node.varType.__contains__("["):
+            vtype = varType(node.varType.strip("[]"))
+            add_var(vname, vtype)
+            compilador(node.varExpression, emitter)
+        else:
+            vtype = varType(node.varType)
+            expr = node.varExpression
+            pname = emitter.get_pointer_name(vname)
+            add_var(vname, vtype)
+            if contexts[-1].get_name() == "global":
+                pname = pname.replace("%","@")
+                registo = compilador(expr, emitter)
+                emitter.declare_lines.append(f"{pname} = global {vtype} {registo}")
+            else:
+                emitter.append(f"   {pname} = alloca {vtype}, align 4")
+                registo = compilador(expr, emitter)
+                emitter.append(f"   store {vtype} {registo}, {vtype}* {pname}, align 4")
     elif isinstance(node, FunctionDeclaration):
         fname = node.funName
+        if fname == "main":
+            fname = "main_with_args"
         ftype = funType(node.funType)
         parameters = node.parameters
         paramList = []
@@ -280,18 +288,24 @@ end_loop:
         contexts.append(VarTable(fname))
         add_var(fname, ftype)
         for parameter in parameters:
-            paramList.append(f"{varType(parameter.varType)} %{parameter.varName}")
+            paramList.append(f"{varType(parameter.varType)}* {emitter.get_pointer_name(parameter.varName)}")
             args.append((varType(parameter.varType)))
             add_var(parameter.varName, varType(parameter.varType))
         paramString = ", ".join(paramList)
-        declareString = re.sub(r' %[^,]*', '', paramString)
         functions[fname] = (ftype, args)
-        emitter.declare_lines.append(f"declare {ftype} @{fname}({declareString})")
-        emitter.append(f"define {ftype} @{fname}({paramString}) {{")
-        for statement in node.block:
-            compilador(statement, emitter)
-        emitter.append("}")
+        if len(node.block) > 0:
+            emitter.append(f"define {ftype} @{fname}({paramString}) {{")
+            for statement in node.block:
+                compilador(statement, emitter)
+            if ftype == "void":
+                emitter.append(f"  ret void")
+            emitter.append("}")
         contexts.pop()
+        if fname == "main_with_args":
+            emitter.lines.append(f"   %args = alloca i8*, align 8")
+            emitter.lines.append(f"   %args_null = bitcast i8* null to i8**")
+            emitter.lines.append(f"   store i8* null, i8** %args, align 8")
+            emitter.lines.append(f"   call void @main_with_args(i8** %args_null)")
     elif isinstance(node, Expression):
         return compilador(node.expression, emitter)
     elif isinstance(node, IfStatement):
@@ -365,7 +379,9 @@ end_loop:
             emitter.append(f"  {result} = sdiv i32 {left}, {right}")
         elif node.op == "%":
             emitter.append(f"  {result} = srem i32 {left}, {right}")
-        elif node.op == "**":
+        elif node.op == "^":
+            emitter.declare_lines("declare i32 @powi32(i32, i32)")
+            emitter.global_lines(powi32_function)
             emitter.append(f"  {result} = call i32 @powi32(i32 {left}, i32 {right})")
         else:
             raise ValueError(f"Operação não suportada: {node.op}")
@@ -407,7 +423,8 @@ end_loop:
 
             emitter.append(f"{end}:")
             final_result = f"%{emitter.get_id()}"
-            emitter.append(f"  {final_result} = phi i1 [{right_val}, %{evaluate_right}], [{false_result}, %{left_is_false}]")
+            emitter.append(
+                f"  {final_result} = phi i1 [{right_val}, %{evaluate_right}], [{false_result}, %{left_is_false}]")
             return final_result
 
         elif node.op == "||":
@@ -426,13 +443,18 @@ end_loop:
 
             emitter.append(f"{end}:")
             final_result = f"%{emitter.get_id()}"
-            emitter.append(f"  {final_result} = phi i1 [{true_result}, %{left_is_true}], [{right_val}, %{evaluate_right}]")
+            emitter.append(
+                f"  {final_result} = phi i1 [{true_result}, %{left_is_true}], [{right_val}, %{evaluate_right}]")
             return final_result
     elif isinstance(node, IdentifierOp):
         reg = f"%{emitter.get_id()}"
         pname = emitter.get_pointer_name(node.id)
         ptype = get_var(node.id)
-        emitter.append(f"  {reg} = load {ptype}, {ptype}* {pname}")
+        if contexts[0].has_var(node.id):
+            pname = pname.replace("%","@")
+            emitter.append(f"  {reg} = load {ptype}, {ptype}* {pname}")
+        else:
+            emitter.append(f"  {reg} = load {ptype}, {ptype}* {pname}")
         return reg
     elif isinstance(node, UnaryOp):
         expression = compilador(node.expression, emitter)
@@ -441,10 +463,8 @@ end_loop:
             emitter.append(f"  {result} = sub i32 0, {expression}")
 
         elif node.sign == "!":
-            temp = f"%{emitter.get_id()}"
-            emitter.append(f"  {temp} = icmp eq i1 {expression}, 0")
             result = f"%{emitter.get_id()}"
-            emitter.append(f"  {result} = zext i1 {temp} to i1")
+            emitter.append(f"  {result} = icmp eq i1 {expression}, 0")
         else:
             raise NotImplementedError(f"Unary operation '{node.sign}' not supported")
         return result
@@ -494,21 +514,52 @@ end_loop:
         if var_name == contexts[-1].get_name():
             emitter.append(f"  ret {vtype} {expr_value}")
         else:
-            var_ptr = emitter.get_pointer_name(var_name)  # Obtém o ponteiro para a variável
+            var_ptr = emitter.get_pointer_name(var_name)
             emitter.append(f"  store {vtype} {expr_value}, {vtype}* {var_ptr}, align 4")
+    elif isinstance(node, ArrayExprOp):
+        varname = get_last()
+        vtype = get_var(varname)
+        size = len(node.array_elements)
+        var = emitter.get_pointer_name(varname)
+        emitter.append(f"   {var} = alloca {vtype}, i32 {size}")
+        index = 0
+        for element in node.array_elements:
+            expr = compilador(element, emitter)
+            emitter.append(f"   {var}{index} = getelementptr {vtype}, {vtype}* {var}, i32 {index}")
+            emitter.append(f"   store {vtype} {expr}, {vtype}* {var}")
+            index += 1
+        return f"%{var}"
+    elif isinstance(node, ArrayAccessOp):
+        vname = node.varName
+        expression = compilador(node.expression, emitter)
+        vtype = get_var(vname)
+        varResult = emitter.get_id()
+        emitter.append(f"   %{varResult} = load {vtype}, {vtype}* {emitter.get_pointer_name(vname)}{expression}")
+        return varResult
+    elif isinstance(node, FunAssignmentStatement):
+        fname = node.funName
+        ftype = functions[fname][0]
+        paramList = []
+        for parameter in functions[fname][1]:
+            paramList.append(f"{parameter[0]} %{parameter[1]}")
+        paramString = ", ".join(paramList)
+        contexts.append(VarTable(fname))
+        emitter.global_lines.append(f"define {ftype} @{fname}({paramString}) {{")
+        for statement in node.block:
+            compilador(statement, emitter)
+        emitter.append("}")
+        contexts.pop()
+    elif isinstance(node, FunCallStatement):
+        fname = node.funName
+        arguments = node.arguments
+        arg_regs = []
 
+        for i in range(len(arguments)):
+            arg_reg = compilador(arguments[i], emitter)
+            arg_regs.append((functions[fname][1][i][1], arg_reg))
 
-if __name__ == "__main__":
-    codigo_llvm = compilador(program)
-    print(codigo_llvm)
+        args_string = ", ".join([f"{arg[0]} {arg[1]}" for arg in arg_regs])
+        result_reg = f"%{emitter.get_id()}"
 
-    with open("code.ll", "w") as f:
-        f.write(codigo_llvm)
-    import subprocess
-
-    # /usr/local/opt/llvm/bin/lli code.ll
-    r = subprocess.call(
-        "/usr/local/opt/llvm/bin/llc code.ll && clang code.s -o code && ./code",
-        shell=True,
-    )
-    # print("Return code", r)
+        emitter.append(f"  {result_reg} = call {functions[fname][0]} @{fname}({args_string})")
+        return result_reg
